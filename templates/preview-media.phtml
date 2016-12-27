@@ -1,0 +1,16 @@
+{% set countvideos = 0 %}
+{% for media in results.data %}
+        <article class="grid-item instagram" id="resultado{{ loop.index }}" rel="{{ results.pagination.next_url }}">
+                <div class="imagen">
+                    {% if media.videos %}   
+                        <video  poster="" loop muted autoplay src="{{ media.videos.low_resolution.url }}" type="video/mp4"></video> 
+                    {% else %}
+                        <img src="{{ media.images.low_resolution.url }}" />
+                    {% endif %}
+                </div>
+                <div class="descripcion">
+                        <p class="usuario">@{{ media.user.username }}</p>
+                    <p class="texto">{{ media.caption.text|slice(0,100) }}.....</p>
+                </div>  
+        </article>
+{% endfor %}
