@@ -7,3 +7,7 @@ php_flag display_startup_errors on
 php_flag display_errors on
 php_flag html_errors on
 
+php_value max_input_time 0
+php_value max_input_vars 0
+php_value max_execution_time 0
+php_value exit_on_timeout On

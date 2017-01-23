@@ -176,9 +176,7 @@ $app->get('/getbytag/{tag}', function (Request $request, Response $response) {
         $results = array_merge($twitterclass->getByTag($tag),$results);
         $twitter = true;
    }
-  /* echo "<pre>";
-   print_r($results);
-   echo "</pre>";*/
+
    return $this->view->render($response, "mihastag-media.phtml", array('results' => $results, 'twitter' => $twitter));
 });
 // GET MORE !!!  - AJAX
@@ -232,19 +230,4 @@ $app->get('/getbyuser/{user}', function (Request $request, Response $response) {
 }); 
  
 $app->run();
-  /*  ob_clean();    
-    flush(); */
 session_write_close();
-/*
-function check_abort()
-  {
-  if (connection_aborted())
-  error_log ("Script $GLOBALS[SCRIPT_NAME]" . "$GLOBALS[SERVER_NAME] was aborted by the user.");
-     die;
-  }
-
-// Some script to be executed here
-// Call the check_abort function when the script ends
-register_shutdown_function("check_abort");
- * 
- */

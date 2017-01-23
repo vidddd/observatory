@@ -53,28 +53,14 @@ ob_end_flush();     // Strange behaviour, will not work
 flush();            // Unless both are called !
 ob_end_clean();
 
+// close current session
+if (session_id()) session_write_close(); 
+
 $pid=pcntl_fork();
 
 if ($pid) {
-  //long time process
-  $a=0;
-  while (true) {
-    echo "a=$a\n\n";
-    ob_flush();
-    flush();
-    $a++;
-    shell_exec('sleep 10&');
-  }
-} else {
-  //time-limit checker
-  sleep(5);
   posix_kill(posix_getppid(),SIGKILL);
 } 
-
-
-//do processing here
-//sleep(5);
-
 
 //ignore_user_abort(false);
 //ob_flush();
