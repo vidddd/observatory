@@ -160,11 +160,12 @@ function getMihastagMore(){
               })           
                 ;
         } else {
-        //    alert("4");
+        request.abort();
               RecargadePagina();
+              
         }
       
-        request.abort();
+        
 }
 
 function RecargadePagina(){

@@ -1,7 +1,7 @@
 <?php
-opcache_reset();
+//opcache_reset();
 error_reporting(E_ALL ^ E_NOTICE);
-ini_set("session.gc_maxlifetime", 24000);
+//ini_set("session.gc_maxlifetime", 24000);
 require_once "vendor/autoload.php";
 require_once "secret.php";
 require_once "classes/class.instagram.php";
@@ -18,31 +18,41 @@ $app = new \Slim\App(["settings" => $config]);
 $app->add(new \RKA\SessionMiddleware(['name' => 'SessionObservatory']));
 $container = $app->getContainer();
 $container['view'] = new \Slim\Views\PhpRenderer("templates/");
-$session = new \RKA\Session();
+
 $container['access_token'] = ''; $container['user'] = '';
-$container['session'] = $session;
+//$container['session'] = $session;
+
 
 // PAGINA DE INICIO
 $app->get('/', function (Request $request, Response $response) {
-    $login = false; global $db;
-    
-    $db->where ("id", "1");
-    $ses = $db->getOne("sessions");
-    $access_token = $ses['access_token']; 
-    $this->session->set('username', $ses['uname']); 
-    $this->session->set('profile_picture', $ses['upic']); 
-    
-    if($access_token){
+    $login = false;
+    $this->session = new \RKA\Session();
+    if($this->session->__isset('access_token')){
        $login = true;
-       $this->session->set('access_token', $ses['access_token']);  
-       if($this->session->__isset('access_token')){
-            $login = true;
-        }
-    }
-    return $this->view->render($response, "index.phtml", [ 'urllogin' => URL_LOGIN, 
+       return $this->view->render($response, "index.phtml", [ 'urllogin' => URL_LOGIN, 'error' => false, 'is_error' => false,
                                                            'login' => $login, 
                                                            'username' => $this->session->get('username'),
                                                            'profile_picture' => $this->session->get('profile_picture')]);
+    }
+     else {
+         return $this->view->render($response, "login.phtml", [ 'url' => URL ,'error' => true ]);
+    }
+});
+// ACCEDER
+$app->post('/', function (Request $request, Response $response) {
+    $usuario = $request->getParam('usuario');$pass = $request->getParam('pass');
+    global $db;
+    $this->session = new \RKA\Session();
+    if($usuario == USUARIO && $pass == PASS){
+           $db->where ("id", "1");
+            $ses = $db->getOne("sessions");
+            $this->session->set('access_token',$ses['access_token']); 
+            $this->session->set('username', $ses['uname']); 
+            $this->session->set('profile_picture', $ses['upic']); 
+          return $response->withStatus(302)->withHeader('Location', '/');
+    } else {
+         return $this->view->render($response, "login.phtml", [ 'error' => true, "url" => URL ]);
+    }
 });
 // LOGIN 
 $app->get('/instalogin', function (Request $request, Response $response) {
@@ -54,18 +64,14 @@ $app->get('/instalogin', function (Request $request, Response $response) {
 $app->get('/logout', function (Request $request, Response $response) {
     \RKA\Session::destroy();
     $login = false;
-    $results = Instagram::logout();
-    return $this->view->render($response, "index.phtml", [ 'login' => $login, 'results' => $results ]);
+    // $results = Instagram::logout();
+    return $this->view->render($response, "login.phtml", [ 'url' => URL ]);
 });
 // Despues de loguearme en Instagram en devuelve aqui con el codigo  http://your-redirect-uri?code=CODE
 $app->get('/dos', function (Request $request, Response $response, $instagram) {
    // comprobamos que no ha sido error http://your-redirect-uri?error=access_denied&error_reason=user_denied&error_description=The+user+denied+your+request
 
     if($request->getAttribute('error')){
-        /*  echo "<pre>";
-    print_r($request);
-    echo "</pre>"; die;*/
-        
        // $error = true; 
       // $response = $this->view->render($response, "index.phtml", ["error" => $request->getAttribute('error_reason'), 'username' => $this->session->username, 'profile_picture' => $this->session->get('profile_picture') ]);
    }
@@ -94,20 +100,21 @@ $app->get('/dos', function (Request $request, Response $response, $instagram) {
 // PULSAMOS GET POSTS !!!
 $app->post('/busca', function (Request $request, Response $response) {
     $results = array(); global $twitterclass; global $db; global $word;
-    $tag = $request->getParam('tag'); $username = $request->getParam('username'); $twitter = $request->getParam('twitter');
-    if($this->session->__isset('access_token')){     $login = true; 
-        $access_token = $this->session->get('access_token');
+    $this->session = new \RKA\Session();
+    $tag = $request->getParam('tag');  $username = $request->getParam('username'); $twitter = $request->getParam('twitter');
+    if($this->session->__isset('access_token')){     
+       $login = true; 
+       $access_token = $this->session->get('access_token');
     } else {
-          return $response->withStatus(302)->withHeader('Location', '/');  
+       return $response->withStatus(302)->withHeader('Location', URL);  
     } 
    
-    
     if($tag != ''){ 
        $results = Instagram::getMediaTag($tag,$access_token); 
        if($twitter){$results = array_merge($twitterclass->getByTag($tag),$results);
-                     $this->session->set('twitter', $twitter);}         
+       $this->session->set('twitter', $twitter);}         
        $word = $tag; $type = 1;           
-       } 
+    } 
     if($username !='') {
         $results = Instagram::getUserMediaRecent($username,$access_token);
         $word = $username; $type = 2;
@@ -122,12 +129,12 @@ $app->post('/busca', function (Request $request, Response $response) {
             );
     $db->insert('searchs', $data);
     
-    $response = $this->view->render($response, "index.phtml", array('access_token' => $access_token, 
+    return $this->view->render($response, "index.phtml", array('access_token' => $access_token, 
                                                                         'login' => $login, 
                                                                         'results' => $results,
                                                                         'twitter'  => $twitter,
                                                                         'tag' => $tag,'user'=> $username, 'username' => $this->session->get('username'), 'profile_picture' => $this->session->get('profile_picture')));
-    return $response;
+
 });
 // PULSAMOS MORE RESULTS !!!  - AJAX
 $app->post('/morea', function (Request $request, Response $response) {

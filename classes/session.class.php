@@ -8,7 +8,7 @@ protected $sessionID;
         if( !isset($_SESSION) ){
             $this->init_session();
         }
-        session_start();
+       // session_start();
         $this->sessionID = session_id();
     }
 
