@@ -1,32 +1,60 @@
+var getUrlParameter = function getUrlParameter(sParam) {
+    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+        sURLVariables = sPageURL.split('&'),
+        sParameterName,
+        i;
+    for (i = 0; i < sURLVariables.length; i++) {
+        sParameterName = sURLVariables[i].split('=');
+
+        if (sParameterName[0] === sParam) {
+            return sParameterName[1] === undefined ? true : sParameterName[1];
+        }
+    }
+};
+
+
+
 $(function() {
-    var tag = getUrlParameter('tag');
-    var user = getUrlParameter('username');
-    if(tag){
-        getByTag(tag);
-    }
-    if(user){
-        getByUser(user);
-    }
-    setTimeout(mostrarResultados,1000);
+    //var tag = getUrlParameter('tag');
+    //var user = getUrlParameter('username');
+    var id = getUrlParameter('id');
+    FirstTime(id);
+    setTimeout(getFirstTime(id),100);
+    setTimeout(mostrarResultados,500);
     $('#masonry-grid').css('display','none');
     setTimeout(RecargadePagina,3600000);
-
 });
+
+
+setInterval(function () {
+     var id = getUrlParameter('id');
+     getMihastagMore();
+     setTimeout(getFirstTime(id),500);
+
+     
+     ocultarResultados();
+     setTimeout(mostrarResultados,100);
+}, 60000);
+
 
 var controlColocacion=0;
 function ColocarMasonry(){
-	if(controlColocacion==0){
+   alert('colocar');	
+    if(controlColocacion==0){
 	}else{
-		$('#masonry-grid').masonry("reloadItems");
+            $('#masonry-grid').masonry("reloadItems");
 	}
 	$('#masonry-grid').masonry();
+        $('#masonry-grid').css('display','block');
 }
+
 
 //funcion para mostrar los resultados
 function mostrarResultados(){
-	$('#masonry-grid').css('display','block');
+
+        $('#masonry-grid').css('display','block');
 	//nombre de cada funcion a la que llamamos con los siguientes parametros (identificador , delay)
-	setTimeout(ColocarMasonry,500);
+	//setTimeout(ColocarMasonry,1000);
 	 Entrada1(1,1);
 	 Entrada2(2,1.1);
 	 Entrada3(3,1.5);
@@ -45,15 +73,26 @@ function mostrarResultados(){
 	 Entrada1(16,4.25);
 	 Entrada3(17,5);
 	 Entrada1(18,3.25);
-	setTimeout(ocultarResultados,100000); //1,8 SEG
+         Entrada3(19,2.25);
+	 Entrada1(20,3);
+	 Entrada2(21,3.5);
+	 Entrada3(22,3);
+	 Entrada2(23,4.5);
+	 Entrada1(24,3.75);
+	 Entrada1(25,4.25);
+	 Entrada3(26,5);
+	 Entrada1(27,3.25);
+	 Entrada1(28,4.25);
+	 Entrada3(29,5);
+	 Entrada1(30,3.25);
 }
 
 //funcion para ocultar el contenido, hacemos un bucle y ocultamos los 18 resultados
 function ocultarResultados(){
-	 for(i=1;i<19;i++){
+        for(i=1;i<30;i++){
 		 retraso=0.05*i;
 		 Salida(i,retraso);
-	 }
+             }
 }
 
 /*---------------------------- Animaciones de Entrada ---------------------*/
@@ -84,29 +123,30 @@ function Entrada3(numero,retraso){
 	var descripcion = $("#resultado"+numero).children('.descripcion');
 	TweenMax.from(resultado, 1, {autoAlpha:0,scaleX:0.5,scaleY:0.5,delay:retraso, ease:Power4.easeInOut});
 	TweenMax.from(imagen, 0.5, {autoAlpha:0,scaleY:0,delay:(retraso+0.5), ease:Power4.easeInOut});
-	TweenMax.from(descripcion, 0.5, {autoAlpha:0,delay:(retraso+0.75)});
+	TweenMax.from(descripcion, 0.5, {autoA4lpha:0,delay:(retraso+0.75)});
 }
 
 /*---------------------------- Animación de Salida -------------------------*/
 function Salida(numero,retraso){
+        $('#masonry-grid').css('display','block');
 	var resultado = $("#resultado"+numero);
 	if(numero==18){	
 		TweenMax.to(resultado, 0.5, {autoAlpha:0,delay:retraso,onComplete:function(){
-			$('#masonry-grid').css('display','none');
-			setTimeout(getMihastagMore,50);
-			setTimeout(mostrarResultados,2500);	
+			//$('#masonry-grid').css('display','none');
+                       	
 			controlColocacion++;
 		}});
 	}else{
             TweenMax.to(resultado, 0.5, {autoAlpha:0,delay:retraso});
 	}
+    
 }
 
 function getByTag(tag){
    var request = $.ajax({
             url: "/preview-tag.php",
             type: "GET",
-            data: {tag : tag},
+            data: {tag : tag, more: 0},
             timeout: 5000,
             dataType: "html"
         }).done(function( html ) {
@@ -114,14 +154,37 @@ function getByTag(tag){
         });
 }
 
-function getByUser(user){
+function FirstTime(id){
+    
+   var request = $.ajax({
+            url: "/preview-firsttime.php",
+            type: "GET",
+            data: {id : id, more: 0},
+            timeout: 5000,
+            dataType: "html"
+        }).done(function( html ) {
+
+        });
+}
+function getByTag(tag){
+   var request = $.ajax({
+            url: "/preview-tag.php",
+            type: "GET",
+            data: {tag : tag},
+            timeout: 1500,
+            dataType: "html"
+        }).done(function( html ) {
+         
+        $("#masonry-grid").html( html );
+        });
+}
+function getFirstTime(id){
 
    var request = $.ajax({
-            url: "https://observatory.tbwainnovation.com/preview-tag.php",
+            url: "https://observatory.tbwainnovation.com/preview-get.php",
             timeout: 5000,
             type: "GET",
-            data: {user : user},
-
+            data: {id : id},
             dataType: "html"
         }).done(function( html ) {
             $("#masonry-grid").html( html );
@@ -130,12 +193,16 @@ function getByUser(user){
 
 function getMihastagMore(){
        
-        var url = $("#resultado1").attr('rel');
-        if(url){
+    var url = $(".instagram").attr('rel');   
+    var lastid = $(".twitter:last").attr('data2');
+    var tag = $("#tag2").html();
+    var user = $("#user2").html();
+    var id = getUrlParameter('id');
+        if(id){
            var request = $.ajax({
-                url: "https://observatory.tbwainnovation.com/preview-tag.php",
+                url: "https://observatory.tbwainnovation.com/preview-firsttime.php",
                 type: "GET",
-                data: {url : url},
+                data: {more : 1,id: id, url : url, lastid: lastid},
                 timeout: 15000,
                 dataType: "html",
                 error: function(x, t, m) {
@@ -144,7 +211,7 @@ function getMihastagMore(){
                 },
                 statusCode: {
                         500: function() {
-                     alert("2"); 
+                    // alert("2"); 
                          RecargadePagina();
                         }
                       }
@@ -162,27 +229,13 @@ function getMihastagMore(){
         } else {
         request.abort();
               RecargadePagina();
-              
-        }
-      
-        
+        }  
+ 
+  
 }
 
 function RecargadePagina(){
    // alert("5");
 	location.reload();	
 }
-var getUrlParameter = function getUrlParameter(sParam) {
-    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
-        sURLVariables = sPageURL.split('&'),
-        sParameterName,
-        i;
 
-    for (i = 0; i < sURLVariables.length; i++) {
-        sParameterName = sURLVariables[i].split('=');
-
-        if (sParameterName[0] === sParam) {
-            return sParameterName[1] === undefined ? true : sParameterName[1];
-        }
-    }
-};

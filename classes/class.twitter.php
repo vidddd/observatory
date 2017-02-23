@@ -22,30 +22,29 @@ class Twitter{
         $results = array(); $i=0;
         
         if(isset($lastid)){
-            $statuses = $this->connection->get("search/tweets", ["q" => "#".$tag, "max_id" => $lastid]);
+            $statuses = $this->connection->get("search/tweets", ["q" => "#".$tag, "max_id" => $lastid, 'result_type' => 'recent']);
         } else {
-            $statuses = $this->connection->get("search/tweets", ["q" => "#".$tag]); 
+            $statuses = $this->connection->get("search/tweets", ["q" => "#".$tag,'result_type' => 'recent']); 
         }
     
         if ($this->connection->getLastHttpCode() == 200) {
             foreach($statuses as $med){
                 foreach($med as $media){ 
                     if(is_object($media)){
-                        $results['twitter'][$i]['text'] = $media->text;
-                        $results['twitter'][$i]['id'] = $media->id;
+                        $results[$i]['source'] = 'twitter';
+                        $results[$i]['text'] = $media->text;
+                        $results[$i]['id_source'] = $media->id;
+                        $results[$i]['url'] = 'https://twitter.com/statuses/'.$media->id;
                         if(isset($media->entities->media)){
                             foreach($media->entities->media as $img){
-                              $results['twitter'][$i]['url'] = $img->url;
-                              $results['twitter'][$i]['media_url'] = $img->media_url;
+                              
+                              $results[$i]['media_url'] = $img->media_url;
                             }
                         }
                     }
-                    /* echo "<pre>";
-                    print_r($media); 
-                    echo "9999999999999999999</pre>";*/
                     if(isset($media->user->name)){
-                        $results['twitter'][$i]['user_name']=$media->user->name;
-                        $results['twitter'][$i]['user_profile_image_url']=$media->user->profile_image_url;
+                        $results[$i]['user_name']=$media->user->name;
+                        $results[$i]['user_profile_image_url']=$media->user->profile_image_url;
                     }
                     $i++;
                 }
@@ -53,6 +52,46 @@ class Twitter{
         } else {
             // Handle error case
         }
+   // echo "<pre>"; print_r($results); echo "</pre>"; die;
+      return $results;
+     }
+     
+     public function getByUsername($username, $lastid = null){
+                 $results = array(); $i=0;
+        
+        if(isset($lastid)){
+            $statuses = $this->connection->get("search/tweets", ["q" => "@".$username, "max_id" => $lastid,'result_type' => 'popular' ]);
+                     
+        } else {
+            $statuses = $this->connection->get("search/tweets", ["q" => "@".$username,'result_type' => 'popular']); 
+        }
+    
+        if ($this->connection->getLastHttpCode() == 200) {
+            foreach($statuses as $med){
+                foreach($med as $media){ 
+                    if(is_object($media)){
+                        $results[$i]['source'] = 'twitter';
+                        $results[$i]['text'] = $media->text;
+                        $results[$i]['id'] = $media->id;
+                        $results[$i]['url'] = 'https://twitter.com/statuses/'.$media->id;
+                        if(isset($media->entities->media)){
+                            foreach($media->entities->media as $img){
+                              
+                              $results[$i]['media_url'] = $img->media_url;
+                            }
+                        }
+                    }
+                    if(isset($media->user->name)){
+                        $results[$i]['user_name']=$media->user->name;
+                        $results[$i]['user_profile_image_url']=$media->user->profile_image_url;
+                    }
+                    $i++;
+                }
+            }
+        } else {
+            // Handle error case
+        }
+
       return $results;
      }
 }

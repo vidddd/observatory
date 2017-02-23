@@ -10,11 +10,10 @@
 <script src="../js/CSSPlugin.min.js"></script>
 <script src="../js/EasePack.min.js"></script>
 <script src="../js/TweenMax.min.js"></script>
-<script src="../js/ajax.js"></script>
 </head>
 <body> 
 <header>
-    <div id="mihastag"><a id="tag" rel="" href="https://observatory.tbwainnovation.com">{{ param }}</a></div>
+    <div id="mihastag"><a id="tag" rel="" href="https://observatory.tbwainnovation.com">{{ pe }}</a></div>
     <div id="miusuario"><img src="{{ profile_picture }}"></div>
     <div id="logo"><img src="../../images/logo_header.png"></div>
 </header>
@@ -27,6 +26,9 @@
         <h2>No session, please <a href="https://observatory.tbwainnovation.com">login</h2>
     </section>
 {% endif %}
+<span id="tag2" style="display:none;">{{ tag }}</span>
+<span id="user2" style="display:none;">{{ username }}</span>
+<span id="id" style="display:none;">{{ id }}</span>
 <script src="../js/main.js"></script>
 </body>
 </html>

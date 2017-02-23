@@ -1,7 +1,6 @@
 <?php
-//opcache_reset();
+opcache_reset();
 error_reporting(E_ALL ^ E_NOTICE);
-//ini_set("session.gc_maxlifetime", 24000);
 require_once "vendor/autoload.php";
 require_once "secret.php";
 require_once "classes/class.instagram.php";
@@ -25,12 +24,15 @@ $container['access_token'] = ''; $container['user'] = '';
 
 // PAGINA DE INICIO
 $app->get('/', function (Request $request, Response $response) {
-    $login = false;
+    $login = false; global $db;
     $this->session = new \RKA\Session();
+    $db->orderBy("date", "desc");$searchs = $db->get('searchs');
+    
     if($this->session->__isset('access_token')){
        $login = true;
        return $this->view->render($response, "index.phtml", [ 'urllogin' => URL_LOGIN, 'error' => false, 'is_error' => false,
-                                                           'login' => $login, 
+                                    
+                                                           'searchs' => $searchs, 
                                                            'username' => $this->session->get('username'),
                                                            'profile_picture' => $this->session->get('profile_picture')]);
     }
@@ -38,6 +40,10 @@ $app->get('/', function (Request $request, Response $response) {
          return $this->view->render($response, "login.phtml", [ 'url' => URL ,'error' => true ]);
     }
 });
+
+
+
+
 // ACCEDER
 $app->post('/', function (Request $request, Response $response) {
     $usuario = $request->getParam('usuario');$pass = $request->getParam('pass');
@@ -54,6 +60,22 @@ $app->post('/', function (Request $request, Response $response) {
          return $this->view->render($response, "login.phtml", [ 'error' => true, "url" => URL ]);
     }
 });
+// borrar
+$app->get('/delete', function (Request $request, Response $response) {
+     global $db; $id = $request->getParam('id');
+    $this->session = new \RKA\Session();
+    if($this->session->__isset('access_token')){
+        $db->where('id', $id);
+        if($db->delete('searchs')) echo 'searchs successfully deleted';
+        $db->where('searchid', $id);
+        if($db->delete('medias')) echo 'medias successfully deleted';
+     
+        return $response->withStatus(302)->withHeader('Location', '/');  
+    }
+     else {
+         return $this->view->render($response, "login.phtml", [ 'url' => URL ,'error' => true ]);
+    }
+});
 // LOGIN 
 $app->get('/instalogin', function (Request $request, Response $response) {
    $url = "https://api.instagram.com/oauth/authorize/?client_id=".CLIENT_ID."&redirect_uri=".REDIRECT_URL."&response_type=code&scope=public_content";
@@ -61,6 +83,7 @@ $app->get('/instalogin', function (Request $request, Response $response) {
    $newres = $response->withStatus(302)->withHeader('Location', $url);
    return $newres;
 });
+
 $app->get('/logout', function (Request $request, Response $response) {
     \RKA\Session::destroy();
     $login = false;
@@ -99,41 +122,35 @@ $app->get('/dos', function (Request $request, Response $response, $instagram) {
 
 // PULSAMOS GET POSTS !!!
 $app->post('/busca', function (Request $request, Response $response) {
-    $results = array(); global $twitterclass; global $db; global $word;
-    $this->session = new \RKA\Session();
-    $tag = $request->getParam('tag');  $username = $request->getParam('username'); $twitter = $request->getParam('twitter');
+    global $twitterclass; global $db; $this->session = new \RKA\Session();
+    $tag = $request->getParam('tag');  $username = $request->getParam('username'); $type = $request->getParam('type');
+    $ecoembes = $request->getParam('ecoembes'); $tag_ecoembes = $request->getParam('tag-ecoembes'); $username_ecoembes = $request->getParam('username-ecoembes');$playstation = $request->getParam('playstation'); $tag_playstation = $request->getParam('tag-playstation'); $username_playstation = $request->getParam('username-playstation'); $lauder = $request->getParam('lauder'); $tag_lauder = $request->getParam('tag-lauder'); $username_lauder = $request->getParam('username-lauder'); $mcdonalds = $request->getParam('mcdonalds'); $tag_mcdonalds = $request->getParam('tag-mcdonalds'); $username_mcdonalds = $request->getParam('username-mcdonalds'); $new = $request->getParam('new'); $tag_new = $request->getParam('tag-new'); $username_new = $request->getParam('username-new');
+    
+    
     if($this->session->__isset('access_token')){     
-       $login = true; 
+       $login = true; $phrase = '';
        $access_token = $this->session->get('access_token');
     } else {
        return $response->withStatus(302)->withHeader('Location', URL);  
-    } 
-   
-    if($tag != ''){ 
-       $results = Instagram::getMediaTag($tag,$access_token); 
-       if($twitter){$results = array_merge($twitterclass->getByTag($tag),$results);
-       $this->session->set('twitter', $twitter);}         
-       $word = $tag; $type = 1;           
-    } 
-    if($username !='') {
-        $results = Instagram::getUserMediaRecent($username,$access_token);
-        $word = $username; $type = 2;
     }
+    if($tag) $phrase .= "#".$tag." ";if($username) $phrase .= "@".$username." " ;if($tag_ecoembes) $phrase .= "#".$tag_ecoembes." ";if($username_ecoembes) $phrase .= "@".$username_ecoembes." "; if($tag_playstation) $phrase .= "#".$tag_playstation." ";if($username_playstation) $phrase .= "@".$username_playstation." ";  if($tag_lauder) $phrase .= "#".$tag_lauder." ";if($username_lauder) $phrase .= "@".$username_lauder." "; if($tag_mcdonalds) $phrase .= "#".$tag_mcdonalds." ";if($username_mcdonalds) $phrase .= "@".$username_mcdonalds." "; if($tag_new) $phrase .= "#".$tag_new." ";if($username_new) $phrase .= "@".$username_new." ";
     // Guardamos en bbdd la busquda
-    $data = Array ("type" => $type,
-               "word" => $tag.$username,
-               "uid" => $this->session->get('uid'),
-               "username" => $this->session->get('username'),
-               "date" => $db->now(),
-               "access_token" => $access_token
+    $data = Array ("date" => $db->now(), "type" => $type, "phrase" => $phrase,        "tag" => $tag, "username" => $username,
+               "ecoembes" => $ecoembes, "tag-ecoembes" => $tag_ecoembes, "username-ecoembes" => $username_ecoembes,
+               "playstation" => $playstation, "tag-playstation" => $tag_playstation, "username-playstation" => $username_playstation,
+               "lauder" => $lauder, "tag-lauder" => $tag_lauder, "username-lauder" => $username_lauder,
+               "mcdonalds" => $mcdonalds, "tag-mcdonalds" => $tag_mcdonalds, "username-mcdonalds" => $username_mcdonalds,
+               "new" => $new, "tag-new" => $tag_new, "username-new" => $username_new,
             );
-    $db->insert('searchs', $data);
-    
-    return $this->view->render($response, "index.phtml", array('access_token' => $access_token, 
-                                                                        'login' => $login, 
-                                                                        'results' => $results,
-                                                                        'twitter'  => $twitter,
-                                                                        'tag' => $tag,'user'=> $username, 'username' => $this->session->get('username'), 'profile_picture' => $this->session->get('profile_picture')));
+    $id = $db->insert('searchs', $data);
+
+    $db->orderBy("date", "desc");
+    $searchs = $db->get('searchs');
+
+    return $this->view->render($response, "index.phtml", array(   'searchs' => $searchs,
+                                                                        'tag' => $tag,'user'=> $username, 
+                                                                        'username' => $this->session->get('username'),
+                                                                        'profile_picture' => $this->session->get('profile_picture')));
 
 });
 // PULSAMOS MORE RESULTS !!!  - AJAX
@@ -235,6 +252,6 @@ $app->get('/getbyuser/{user}', function (Request $request, Response $response) {
     
    return $this->view->render($response, "mihastag-media.phtml", array('results' => $results));
 }); 
- 
+
 $app->run();
 session_write_close();
