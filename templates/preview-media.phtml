@@ -1,4 +1,8 @@
+{% set count = 1 %}
 {% for media in results %}
+   {% if count == 1 or count == 6 or count == 11 or count == 16 or count == 21 or count == 26 %}
+   <div class="column">
+   {% endif %}
         <article class="grid-item {{ media.source }} {{ media.client }}" id="resultado{{ loop.index }}" rel="{{ media.pagination }}" data2="{{ media.id_source }}">
                 <div class="imagen">
                     {% if media.video_url %}   
@@ -12,4 +16,9 @@
                     <p class="texto">{{ media.text|slice(0,100) }}.....</p>
                 </div>  
         </article>
+   {% if count == 5 or count == 10 or count == 15 or count == 20 or count == 25 or count == 30 %}
+   </div>
+   {% endif %}
+  
+   {% set count = count + 1 %}
 {% endfor %}

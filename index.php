@@ -3,7 +3,7 @@ opcache_reset();
 error_reporting(E_ALL ^ E_NOTICE);
 require_once "vendor/autoload.php";
 require_once "secret.php";
-require_once "classes/class.instagram.php";
+require_once "classes/class.instagram.php";require_once "classes/force-https.php";
 require_once "classes/class.twitter.php";
 
 use \Psr\Http\Message\ServerRequestInterface as Request;

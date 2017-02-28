@@ -10,6 +10,7 @@
 <script src="../js/CSSPlugin.min.js"></script>
 <script src="../js/EasePack.min.js"></script>
 <script src="../js/TweenMax.min.js"></script>
+
 </head>
 <body> 
 <header>
@@ -18,7 +19,7 @@
     <div id="logo"><img src="../../images/logo_header.png"></div>
 </header>
 {% if session %}
-    <section id="masonry-grid" class="grid">
+    <section id="masonry-grid" class="grid" data-columns>
 
     </section>
 {% else %}
@@ -29,6 +30,7 @@
 <span id="tag2" style="display:none;">{{ tag }}</span>
 <span id="user2" style="display:none;">{{ username }}</span>
 <span id="id" style="display:none;">{{ id }}</span>
+<script src="../js/salvattore.min.js"></script>
 <script src="../js/main.js"></script>
 </body>
 </html>
